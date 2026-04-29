@@ -1,18 +1,23 @@
+<div align="center">
+
 # 💼 LinkedIn Job & Skills Analyzer
 
-An open-source AI agent that searches real job postings, extracts required skills, analyses your personal skill gaps, and generates a personalised learning roadmap — **powered by free AI (Groq)**.
+### Your AI-powered career copilot — discover jobs, close skill gaps, build your learning roadmap.
 
 [![CI](https://github.com/arunsuthar98/linkedin-job-analyzer-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/arunsuthar98/linkedin-job-analyzer-tool/actions)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Streamlit](https://img.shields.io/badge/built%20with-Streamlit-ff4b4b)
-![License](https://img.shields.io/badge/license-MIT-green)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Free AI](https://img.shields.io/badge/AI-Free%20(Groq)-brightgreen)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-🌐 **Live Demo:** https://linkedin-job-analyzer-tool-3b7xatqc3va7qptqxcpxzr.streamlit.app
+### 🌐 [**Try the Live Demo →**](https://linkedin-job-analyzer-tool-3b7xatqc3va7qptqxcpxzr.streamlit.app)
+
+</div>
 
 ---
 
-## ✨ Features
+## ✨ What it does
 
 | Feature | Description |
 |---|---|
@@ -20,16 +25,16 @@ An open-source AI agent that searches real job postings, extracts required skill
 | 📊 **AI Skills Analysis** | Extract trending skills across dozens of postings |
 | 🎯 **Skill Gap Analysis** | Compare your skills vs a job — get a readiness score |
 | 📚 **Learning Path** | Phase-based roadmap with YouTube & course links |
+| 📄 **Resume Analyzer** | Upload your resume → AI suggests best-fit roles + training plan |
 | 🆓 **100% Free AI** | Powered by Groq (Llama 3) — no credit card needed |
-| 🌐 **Works out of the box** | Pre-configured public demo — no setup required |
 
 ---
 
-## 🚀 Try It Now
-
-**No installation needed — just open the link:**
+## 🚀 Try It Now (No Install)
 
 👉 **https://linkedin-job-analyzer-tool-3b7xatqc3va7qptqxcpxzr.streamlit.app**
+
+The hosted demo is pre-configured with API keys — just open and use!
 
 ---
 
@@ -37,10 +42,12 @@ An open-source AI agent that searches real job postings, extracts required skill
 
 | Guide | Description |
 |---|---|
-| [🛠️ Setup Guide](docs/SETUP.md) | Run the app locally on your machine |
-| [🔑 API Keys Guide](docs/API_KEYS.md) | How to get free API keys (Groq, JSearch, YouTube) |
-| [✨ Features Guide](docs/FEATURES.md) | Full walkthrough of all features and tabs |
-| [🚀 Deployment Guide](docs/DEPLOYMENT.md) | Deploy on Streamlit Cloud, Docker, or locally |
+| 🛠️ [SETUP.md](docs/SETUP.md) | Install and run locally |
+| 🔑 [API_KEYS.md](docs/API_KEYS.md) | How to get the free API keys |
+| ✨ [FEATURES.md](docs/FEATURES.md) | Full walkthrough of every feature |
+| 🚀 [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deploy on Streamlit Cloud, Docker, or self-host |
+| 🤝 [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| 📋 [CHANGELOG.md](CHANGELOG.md) | Version history |
 
 ---
 
@@ -49,13 +56,15 @@ An open-source AI agent that searches real job postings, extracts required skill
 ```bash
 git clone https://github.com/arunsuthar98/linkedin-job-analyzer-tool.git
 cd linkedin-job-analyzer-tool
+
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+
 cp .env.example .env   # add your free Groq key
 streamlit run app.py
 ```
 
-See [docs/SETUP.md](docs/SETUP.md) for full instructions.
+→ Open **http://localhost:8501** ✅
 
 ---
 
@@ -63,9 +72,9 @@ See [docs/SETUP.md](docs/SETUP.md) for full instructions.
 
 | Key | Required? | Cost | Get it |
 |---|---|---|---|
-| **Groq** | ✅ For AI features | **FREE** | [console.groq.com](https://console.groq.com) |
+| **Groq** | ✅ For AI | **FREE** | [console.groq.com](https://console.groq.com) |
 | **JSearch** | 🔶 Optional | Free tier | [rapidapi.com](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) |
-| **YouTube** | �� Optional | Free | [console.cloud.google.com](https://console.cloud.google.com) |
+| **YouTube** | 🔶 Optional | Free | [console.cloud.google.com](https://console.cloud.google.com) |
 
 See [docs/API_KEYS.md](docs/API_KEYS.md) for step-by-step instructions.
 
@@ -74,37 +83,104 @@ See [docs/API_KEYS.md](docs/API_KEYS.md) for step-by-step instructions.
 ## 🏗️ How It Works
 
 ```
-User enters job role
-      ↓
-JSearch API → Fetch real job postings (LinkedIn/Indeed/Glassdoor)
-      ↓
-Groq AI (free) → Extract & rank skills from descriptions
-      ↓
-User enters their current skills
-      ↓
-Groq AI → Skill gap analysis + readiness score (0–100)
-      ↓
-Groq AI → Phase-by-phase learning roadmap
-      ↓
-YouTube + Coursera/Udemy → Resources for each gap skill
+                 ┌────────────────────────────┐
+                 │   👤 User                  │
+                 │   (job role / resume)      │
+                 └─────────────┬──────────────┘
+                               │
+        ┌──────────────────────┼──────────────────────┐
+        ▼                      ▼                      ▼
+  ┌──────────┐          ┌──────────────┐       ┌──────────────┐
+  │ JSearch  │          │ Groq AI      │       │ PDF / DOCX   │
+  │  API     │          │ (Llama 3)    │       │  Parser      │
+  └─────┬────┘          └──────┬───────┘       └──────┬───────┘
+        │                      │                      │
+        └──────────────────────┼──────────────────────┘
+                               ▼
+                ┌─────────────────────────────┐
+                │  Streamlit GUI (5 tabs)     │
+                │  Search · Analyse · Match · │
+                │  Roadmap · Resume           │
+                └─────────────┬───────────────┘
+                              ▼
+                ┌─────────────────────────────┐
+                │  YouTube + Coursera + Udemy │
+                │  → Training Resources       │
+                └─────────────────────────────┘
+```
+
+---
+
+## 🏗️ Project Structure
+
+```
+linkedin-job-analyzer-tool/
+├── app.py                       # Main Streamlit app (5 tabs)
+├── src/
+│   ├── config.py                # API key management
+│   ├── job_searcher.py          # JSearch API + mock data
+│   ├── skill_analyzer.py        # Skill normalisation
+│   ├── ai_engine.py             # Groq + OpenAI wrapper
+│   ├── learning_recommender.py  # YouTube + course links
+│   └── resume_parser.py         # PDF/DOCX parsing
+├── assets/
+│   └── style.css                # Custom theme
+├── docs/                        # Full documentation
+├── .streamlit/config.toml       # Streamlit theme
+├── requirements.txt
+├── .env.example
+├── LICENSE
+├── CONTRIBUTING.md
+└── CHANGELOG.md
 ```
 
 ---
 
 ## 🤝 Contributing
 
-Pull requests welcome! Please keep PRs focused — one feature or fix per PR.
+Pull requests are very welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+Star ⭐ the repo if you find it useful!
+
+---
+
+## 👤 Author
+
+**Arun Suthar**
+- 🌐 GitHub: [@arunsuthar98](https://github.com/arunsuthar98)
+- 📧 Email: arunsuthar98@gmail.com
+- 💼 Built with ❤️ for everyone navigating their tech career journey
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+You are free to use, modify, distribute, and even sell this software, as long as you include the original copyright notice.
+
+---
+
+## 🙏 Acknowledgements
+
+- 🤖 [Groq](https://console.groq.com) — for blazing-fast free AI inference
+- 📋 [JSearch by Letscrape](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) — for aggregated job data
+- 🎨 [Streamlit](https://streamlit.io) — for making beautiful apps simple
+- 📺 [YouTube Data API](https://developers.google.com/youtube/v3) — for video discovery
+- ❤️ Everyone who stars, contributes, or shares this project
 
 ---
 
 ## ⚠️ Disclaimer
 
 This tool uses publicly available job posting data via the JSearch API.
-It does **not** scrape LinkedIn profiles or violate any Terms of Service.
+It does **not** scrape LinkedIn user profiles or violate any Terms of Service.
 AI-generated results are estimates — use as a starting point, not authoritative career advice.
 
 ---
 
-## 📄 License
+<div align="center">
 
-MIT — free to use, modify, and distribute.
+**Made with 💙 by [Arun Suthar](https://github.com/arunsuthar98)** · If this helped you, please ⭐ star the repo!
+
+</div>

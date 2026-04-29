@@ -5,8 +5,11 @@ Tabs:
   2. 📊 Skills Analysis     — AI-generated skill trends
   3. 🎯 Skill Gap Analysis  — compare your skills against a job posting
   4. 📚 Learning Path       — personalised recommendations
+  5. 📄 Resume Analyzer     — upload resume → matching jobs / gap + training
 """
 from __future__ import annotations
+
+from pathlib import Path
 
 import streamlit as st
 
@@ -26,7 +29,24 @@ st.set_page_config(
     page_icon="💼",
     layout="wide",
     initial_sidebar_state="collapsed",
+    menu_items={
+        "Get Help": "https://github.com/arunsuthar98/linkedin-job-analyzer-tool/issues",
+        "Report a bug": "https://github.com/arunsuthar98/linkedin-job-analyzer-tool/issues/new",
+        "About": (
+            "**LinkedIn Job & Skills Analyzer** v1.2.0  \n"
+            "Open-source AI career assistant — built by [Arun Suthar](https://github.com/arunsuthar98).  \n"
+            "Licensed under MIT."
+        ),
+    },
 )
+
+# ---------------------------------------------------------------------------
+# Custom CSS
+# ---------------------------------------------------------------------------
+
+_css_path = Path(__file__).parent / "assets" / "style.css"
+if _css_path.exists():
+    st.markdown(f"<style>{_css_path.read_text()}</style>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Session-state defaults
@@ -119,11 +139,46 @@ with st.sidebar:
 # Header
 # ---------------------------------------------------------------------------
 
-st.title("💼 LinkedIn Job & Skills Analyzer")
+# ---------------------------------------------------------------------------
+# Hero header
+# ---------------------------------------------------------------------------
+
 st.markdown(
-    "Search real job postings, identify required skills, analyse your skill gaps, "
-    "and get a personalised learning roadmap — all powered by AI."
+    """
+    <div class="hero">
+        <h1>💼 LinkedIn Job & Skills Analyzer</h1>
+        <p>Your AI-powered career copilot — discover jobs, analyse skills, close gaps, and build a personalised learning roadmap.</p>
+        <div class="badges">
+            <span class="badge">🤖 Powered by Free AI (Groq)</span>
+            <span class="badge">🆓 100% Open Source</span>
+            <span class="badge">⚡ Instant Insights</span>
+            <span class="badge">📄 Resume Analyzer</span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
+
+# Feature cards (only shown when user hasn't searched yet — keeps UI clean later)
+if not st.session_state.get("search_done") and not st.session_state.get("resume_analysis"):
+    fc1, fc2, fc3, fc4, fc5 = st.columns(5)
+    cards = [
+        (fc1, "🔍", "Job Search", "Real-time postings from LinkedIn, Indeed & Glassdoor"),
+        (fc2, "📊", "AI Skills", "Trending skills extracted from real job descriptions"),
+        (fc3, "🎯", "Skill Gap", "Honest readiness score against any job"),
+        (fc4, "📚", "Learning Path", "Personalised roadmap with videos & courses"),
+        (fc5, "📄", "Resume Match", "Upload resume → AI finds your best-fit roles"),
+    ]
+    for col, icon, title, desc in cards:
+        with col:
+            st.markdown(
+                f"""<div class="feature-card">
+                    <div class="icon">{icon}</div>
+                    <h4>{title}</h4>
+                    <p>{desc}</p>
+                </div>""",
+                unsafe_allow_html=True,
+            )
 
 if not cfg.has_any_ai:
     st.warning(
@@ -919,3 +974,20 @@ with tab5:
                                 file_name="training_plan.json",
                                 mime="application/json",
                             )
+
+# ---------------------------------------------------------------------------
+# Footer
+# ---------------------------------------------------------------------------
+
+st.markdown(
+    """
+    <div class="footer">
+        Built with 💙 by <a href="https://github.com/arunsuthar98" target="_blank">Arun Suthar</a>
+        · <a href="https://github.com/arunsuthar98/linkedin-job-analyzer-tool" target="_blank">⭐ Star on GitHub</a>
+        · <a href="https://github.com/arunsuthar98/linkedin-job-analyzer-tool/issues" target="_blank">🐛 Report a bug</a>
+        · MIT License<br>
+        <small>Powered by Groq · JSearch · YouTube Data API · Streamlit</small>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)

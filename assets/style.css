@@ -1,0 +1,130 @@
+/* ==========================================================
+   LinkedIn Job & Skills Analyzer — Custom Theme
+   ========================================================== */
+
+/* Gradient hero header */
+.hero {
+    background: linear-gradient(135deg, #0077b5 0%, #00a0dc 50%, #7fc15e 100%);
+    padding: 2.2rem 2rem;
+    border-radius: 16px;
+    color: white;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 119, 181, 0.25);
+}
+.hero h1 {
+    color: white !important;
+    margin: 0 0 0.5rem 0 !important;
+    font-size: 2.2rem !important;
+    font-weight: 700 !important;
+}
+.hero p {
+    color: rgba(255, 255, 255, 0.95) !important;
+    margin: 0 !important;
+    font-size: 1.05rem;
+}
+.hero .badges {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.hero .badge {
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Feature cards */
+.feature-card {
+    background: white;
+    border: 1px solid #e6e9ef;
+    border-radius: 12px;
+    padding: 1.2rem;
+    height: 100%;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+.feature-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.4rem;
+}
+.feature-card h4 {
+    margin: 0.2rem 0 0.4rem 0 !important;
+    color: #0077b5 !important;
+}
+.feature-card p {
+    margin: 0 !important;
+    color: #5b6478;
+    font-size: 0.92rem;
+}
+
+/* Section divider with gradient */
+.gradient-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #0077b5, #7fc15e, transparent);
+    border: none;
+    border-radius: 2px;
+    margin: 1.5rem 0;
+}
+
+/* Pill tags */
+.pill {
+    display: inline-block;
+    background: #eef4fa;
+    color: #0077b5;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    margin: 0.15rem 0.2rem 0.15rem 0;
+    font-weight: 500;
+}
+.pill-success { background: #e6f5e8; color: #2d7a3a; }
+.pill-warning { background: #fff4e1; color: #b75e00; }
+.pill-danger  { background: #fde8e8; color: #c92a2a; }
+
+/* Make Streamlit primary buttons gradient */
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #0077b5, #00a0dc) !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0, 119, 181, 0.3);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.stButton > button[kind="primary"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 119, 181, 0.4);
+}
+
+/* Tab styling */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    background: #f5f7fa;
+    padding: 6px;
+    border-radius: 12px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    padding: 0 14px;
+    font-weight: 500;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    color: #8a93a6;
+    padding: 2rem 1rem 1rem 1rem;
+    font-size: 0.88rem;
+    border-top: 1px solid #e6e9ef;
+    margin-top: 2.5rem;
+}
+.footer a {
+    color: #0077b5;
+    text-decoration: none;
+    font-weight: 500;
+}
+.footer a:hover { text-decoration: underline; }
