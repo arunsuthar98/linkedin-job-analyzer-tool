@@ -16,10 +16,11 @@ A full walkthrough of everything the LinkedIn Job & Skills Analyzer can do.
 5. Click **Search Jobs**
 
 ### What you get:
-- 🏢 **Companies hiring** — ranked by number of openings
-- 📊 **Quick skill frequency** — most mentioned skills across postings
-- 📋 **Job listing** — expandable cards for each posting with full description
-- 🎯 **Select any job** to analyse in the Skill Gap tab
+- 📈 **KPI metrics** — Jobs · Companies · Remote · Locations
+- 📊 **Plotly charts** — top hiring companies, top skills, work-mode pie
+- 📋 **Sortable jobs table** with one-click **🚀 Apply →** links (powered by `st.column_config.LinkColumn`)
+- ⬇️ **CSV export** of all results
+- 👁️ **Detailed cards** (expandable) with full descriptions and Apply / Analyse Gap buttons
 
 ### With/without API keys:
 | JSearch Key | Result |
@@ -113,3 +114,35 @@ The app automatically normalises skill synonyms so results are accurate:
 | `GCP` or `Google Cloud` | `GCP` |
 
 This prevents duplicate counting of the same skill under different names.
+
+---
+
+## Tab 4 bonus — 🎓 Certification Recommender
+
+When you generate a learning path, you also get **6 curated certifications** matched to your role from a catalog of 30+ industry-recognised credentials (AWS, Azure, GCP, Data, AI/ML, DevOps, Security, PM, Finance, Software Engineering). Each card shows:
+
+- 🟢/🟡/🔴 **level badge** (Beginner / Intermediate / Advanced)
+- **Provider** (AWS, Microsoft, Google, etc.)
+- Direct link to the official cert page
+
+---
+
+## Tab 6 — ✍️ Resume Coach
+
+**What it does:** AI rewrites your resume for a specific target job and crafts your LinkedIn copy.
+
+### How to use:
+1. Paste your current resume text
+2. Enter the target job title
+3. Paste the target job description
+4. Click **✨ Generate Coach Output**
+
+### What you get:
+- 🎯 **Tailored resume bullets** — quantified, keyword-rich, ATS-friendly
+- 💼 **LinkedIn headline** — punchy 1-liner
+- 📝 **LinkedIn About section** — full optimised summary
+- ⚠️ **Missing keywords** — pills you should add to your resume
+- 🎤 **Likely interview questions** — based on the JD
+- ⬇️ **JSON download** of the full output
+
+> **Requires:** Groq or OpenAI API key

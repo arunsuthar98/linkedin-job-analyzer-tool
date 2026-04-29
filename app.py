@@ -190,8 +190,8 @@ if not cfg.has_any_ai:
 # Tabs
 # ---------------------------------------------------------------------------
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["🔍 Job Role Research", "📊 Skills Analysis", "🎯 Skill Gap Analysis", "📚 Learning Path", "📄 Resume Analyzer"]
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+    ["🔍 Job Research", "📊 Skills Trends", "🎯 Skill Gap", "📚 Learning Path", "📄 Resume Match", "✍️ Resume Coach"]
 )
 
 # ============================================================
@@ -256,47 +256,125 @@ with tab1:
         if not postings:
             st.warning("No job postings found. Try a different role or location.")
         else:
+            import pandas as pd
+            import plotly.express as px
+
             st.success(f"Found **{len(postings)}** job postings for **{st.session_state.job_role}**")
 
-            # Companies
+            # Build DataFrame for tables/charts
+            df_jobs = pd.DataFrame([{
+                "Title": p.title,
+                "Company": p.company,
+                "Location": p.location,
+                "Type": p.employment_type or "—",
+                "Remote": "🌐" if p.is_remote else "",
+                "Posted": (p.date_posted or "")[:10] or "—",
+                "Source": p.source or "—",
+                "Apply": p.url or "",
+            } for p in postings])
+
+            # ── KPI metrics ──
             searcher_tmp = JobSearcher(api_key=None)
             companies = searcher_tmp.top_companies(postings)
+            remote_count = sum(1 for p in postings if p.is_remote)
+            unique_locations = len({p.location for p in postings if p.location})
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.subheader("🏢 Companies Hiring")
-                for company, count in companies[:10]:
-                    st.markdown(f"- **{company}** — {count} posting{'s' if count > 1 else ''}")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("📋 Jobs", len(postings))
+            m2.metric("🏢 Companies", len(companies))
+            m3.metric("🌐 Remote", remote_count)
+            m4.metric("📍 Locations", unique_locations)
 
-            with col_b:
-                st.subheader("📌 Quick Skill Frequency")
+            st.markdown('<hr class="gradient-divider">', unsafe_allow_html=True)
+
+            # ── Charts ──
+            chart_col1, chart_col2 = st.columns(2)
+            with chart_col1:
+                top_co_df = pd.DataFrame(companies[:10], columns=["Company", "Postings"])
+                if not top_co_df.empty:
+                    fig = px.bar(
+                        top_co_df, x="Postings", y="Company", orientation="h",
+                        title="🏢 Top Companies Hiring",
+                        color="Postings", color_continuous_scale="Blues",
+                    )
+                    fig.update_layout(height=380, yaxis={"categoryorder": "total ascending"},
+                                      showlegend=False, margin=dict(l=0, r=0, t=40, b=0))
+                    st.plotly_chart(fig, use_container_width=True)
+
+            with chart_col2:
                 all_skills = [p.skills_raw for p in postings if p.skills_raw]
                 if all_skills:
                     freq = frequency_map(all_skills)
-                    for skill, count in list(freq.items())[:10]:
-                        pct = int(count / len(postings) * 100)
-                        st.markdown(f"- **{skill}** — {pct}% of postings")
+                    skill_df = pd.DataFrame(list(freq.items())[:12], columns=["Skill", "Count"])
+                    fig = px.bar(
+                        skill_df, x="Count", y="Skill", orientation="h",
+                        title="🛠️ Top Skills (from job tags)",
+                        color="Count", color_continuous_scale="Greens",
+                    )
+                    fig.update_layout(height=380, yaxis={"categoryorder": "total ascending"},
+                                      showlegend=False, margin=dict(l=0, r=0, t=40, b=0))
+                    st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.caption("Skill tags not available from this data source — use the Skills Analysis tab.")
+                    # Remote vs Onsite pie
+                    remote_pie_df = pd.DataFrame({
+                        "Mode": ["Remote", "On-site / Hybrid"],
+                        "Count": [remote_count, len(postings) - remote_count],
+                    })
+                    fig = px.pie(remote_pie_df, names="Mode", values="Count",
+                                 title="🌐 Work Mode Distribution",
+                                 color_discrete_sequence=["#0077b5", "#7fc15e"])
+                    fig.update_layout(height=380, margin=dict(l=0, r=0, t=40, b=0))
+                    st.plotly_chart(fig, use_container_width=True)
 
-            # Job listing
-            st.subheader("📋 Job Postings")
-            for i, p in enumerate(postings):
-                remote_badge = " 🌐 Remote" if p.is_remote else ""
-                with st.expander(f"{p.title} — {p.company} ({p.location}){remote_badge}"):
-                    st.markdown(f"**Source:** {p.source}")
-                    if p.date_posted:
-                        st.markdown(f"**Posted:** {p.date_posted[:10]}")
-                    if p.employment_type:
-                        st.markdown(f"**Type:** {p.employment_type}")
-                    st.markdown("**Description:**")
-                    st.text(p.description[:800] + ("…" if len(p.description) > 800 else ""))
-                    if p.url:
-                        st.link_button("View Full Posting", p.url)
-                    if st.button(f"🎯 Analyse This Job", key=f"select_{i}"):
-                        st.session_state.selected_job_idx = i
-                        st.session_state.gap_analysis = None
-                        st.success(f"Selected: **{p.title}** at {p.company}. Go to the Skill Gap Analysis tab.")
+            st.markdown('<hr class="gradient-divider">', unsafe_allow_html=True)
+
+            # ── Sortable table with direct Apply links ──
+            st.subheader("📋 All Jobs — Sortable Table")
+            st.caption("💡 Click column headers to sort. Click **Apply** to open the job posting.")
+
+            st.dataframe(
+                df_jobs,
+                use_container_width=True,
+                hide_index=True,
+                height=420,
+                column_config={
+                    "Apply": st.column_config.LinkColumn(
+                        "Apply →",
+                        display_text="🚀 Apply",
+                        help="Click to open the job posting",
+                    ),
+                    "Title": st.column_config.TextColumn("Title", width="large"),
+                    "Company": st.column_config.TextColumn("Company", width="medium"),
+                    "Remote": st.column_config.TextColumn("Remote", width="small"),
+                    "Posted": st.column_config.TextColumn("Posted", width="small"),
+                },
+            )
+
+            # CSV export
+            st.download_button(
+                "⬇️ Download as CSV",
+                data=df_jobs.to_csv(index=False).encode(),
+                file_name=f"jobs_{st.session_state.job_role.replace(' ', '_')}.csv",
+                mime="text/csv",
+            )
+
+            # ── Detailed expandable cards ──
+            with st.expander("👁️ View detailed job descriptions"):
+                for i, p in enumerate(postings):
+                    remote_badge = " 🌐 Remote" if p.is_remote else ""
+                    st.markdown(f"### {p.title} — *{p.company}*{remote_badge}")
+                    st.markdown(f"📍 {p.location} · 🏷️ {p.source} · 📅 {(p.date_posted or '—')[:10]}")
+                    st.text(p.description[:600] + ("…" if len(p.description) > 600 else ""))
+                    btn_cols = st.columns([1, 1, 4])
+                    with btn_cols[0]:
+                        if p.url:
+                            st.link_button("🚀 Apply", p.url)
+                    with btn_cols[1]:
+                        if st.button("🎯 Analyse Gap", key=f"select_{i}"):
+                            st.session_state.selected_job_idx = i
+                            st.session_state.gap_analysis = None
+                            st.success(f"Selected — go to **Skill Gap Analysis** tab")
+                    st.divider()
 
 # ============================================================
 # TAB 2 — Skills Analysis
@@ -654,6 +732,22 @@ with tab4:
             mime="application/json",
         )
 
+        # ── Certifications recommender ──
+        from src.certifications import recommend_for_role
+        st.divider()
+        st.subheader("🎓 Recommended Certifications")
+        st.caption("Industry-recognised certifications that boost your credibility for this role")
+        certs = recommend_for_role(role, max_results=6)
+        if certs:
+            cert_cols = st.columns(2)
+            for i, cert in enumerate(certs):
+                with cert_cols[i % 2]:
+                    level_color = {"Beginner": "🟢", "Intermediate": "🟡", "Advanced": "🔴"}.get(cert.level, "⚪")
+                    st.markdown(
+                        f"""**{level_color} [{cert.name}]({cert.url})**
+                        \n*{cert.provider}* · `{cert.category}` · {cert.level}"""
+                    )
+
 # ============================================================
 # TAB 5 — Resume Analyzer
 # ============================================================
@@ -974,6 +1068,91 @@ with tab5:
                                 file_name="training_plan.json",
                                 mime="application/json",
                             )
+
+# ============================================================
+# TAB 6 — Resume Coach (tailored bullets + LinkedIn copy)
+# ============================================================
+with tab6:
+    st.header("✍️ Resume Coach — AI Rewriter")
+    st.caption("Get tailored resume bullets, LinkedIn headline & About section optimized for a target job.")
+
+    if not cfg.has_ai:
+        st.warning("⚠️ AI provider required. Add a Groq or OpenAI key in the sidebar.")
+    else:
+        coach_col1, coach_col2 = st.columns(2)
+        with coach_col1:
+            coach_resume_text = st.text_area(
+                "📄 Paste your current resume",
+                height=260,
+                placeholder="Paste resume text here…",
+                key="coach_resume_input",
+            )
+        with coach_col2:
+            coach_job_title = st.text_input("🎯 Target Job Title", placeholder="e.g. Senior Data Scientist")
+            coach_jd = st.text_area(
+                "📋 Target Job Description",
+                height=200,
+                placeholder="Paste the job description…",
+                key="coach_jd_input",
+            )
+
+        if st.button("✨ Generate Coach Output", type="primary", use_container_width=True):
+            if not coach_resume_text.strip() or not coach_jd.strip() or not coach_job_title.strip():
+                st.error("Please fill all three fields.")
+            else:
+                with st.spinner("AI is crafting your tailored content…"):
+                    try:
+                        ai_coach = AIEngine(
+                            provider=cfg.active_ai_provider,
+                            api_key=cfg.active_ai_key,
+                            model=cfg.active_model,
+                        )
+                        result = ai_coach.coach_resume(
+                            resume_text=coach_resume_text,
+                            job_description=coach_jd,
+                            job_title=coach_job_title,
+                        )
+                        st.session_state["coach_result"] = result
+                    except Exception as e:
+                        st.error(f"AI failed: {e}")
+
+        coach_result = st.session_state.get("coach_result")
+        if coach_result:
+            st.success("✅ Tailored content ready!")
+
+            st.subheader("🎯 Tailored Resume Bullets")
+            for b in coach_result.get("tailored_bullets", []):
+                st.markdown(f"- {b}")
+
+            st.subheader("💼 LinkedIn Headline")
+            st.code(coach_result.get("linkedin_headline", ""), language=None)
+
+            st.subheader("📝 LinkedIn About Section")
+            st.text_area(
+                "Copy this to your LinkedIn About section",
+                value=coach_result.get("linkedin_about", ""),
+                height=180,
+                key="coach_about_out",
+            )
+
+            missing = coach_result.get("missing_keywords", [])
+            if missing:
+                st.subheader("⚠️ Missing Keywords (add these!)")
+                st.markdown(" ".join(f'<span class="pill">{k}</span>' for k in missing), unsafe_allow_html=True)
+
+            iq = coach_result.get("interview_questions", [])
+            if iq:
+                st.subheader("🎤 Likely Interview Questions")
+                for i, q in enumerate(iq, 1):
+                    st.markdown(f"**{i}.** {q}")
+
+            import json as _json
+            st.download_button(
+                "⬇️ Download Coach Output (JSON)",
+                data=_json.dumps(coach_result, indent=2),
+                file_name="resume_coach_output.json",
+                mime="application/json",
+            )
 
 # ---------------------------------------------------------------------------
 # Footer

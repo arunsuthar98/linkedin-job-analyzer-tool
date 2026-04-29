@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.3.0] — Pro Tables, Charts & Resume Coach
+
+### Added
+- 📊 **Interactive Plotly charts** in Job Research tab — top hiring companies, top skills, work-mode distribution
+- 📋 **Sortable jobs table** with one-click **Apply →** links via `st.column_config.LinkColumn`
+- ⬇️ **CSV export** for job search results
+- 📈 **KPI metrics row** — Jobs / Companies / Remote / Locations at a glance
+- 🎓 **Certifications recommender** (`src/certifications.py`) — curated 30+ industry certs (AWS, Azure, GCP, Data, AI, DevOps, Security, PM, Finance, Software) with level badges, shown in Learning Path tab
+- ✍️ **Resume Coach (Tab 6)** — AI-powered tailored resume bullets, LinkedIn headline, LinkedIn About section, missing-keyword detection, likely interview questions
+- New AI method: `AIEngine.coach_resume()`
+
+### Changed
+- Job Research tab redesigned with KPI cards + charts + sortable table layout
+- Tabs renamed to be more concise: 🔍 Job Research · 📊 Skills Trends · 🎯 Skill Gap · 📚 Learning Path · 📄 Resume Match · ✍️ Resume Coach
+- `requirements.txt` adds `plotly` and `pandas`
+
+---
+
 ## [1.2.0] — UI Polish & Resume Analyzer
 
 ### Added
