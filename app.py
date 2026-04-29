@@ -1076,7 +1076,7 @@ with tab6:
     st.header("✍️ Resume Coach — AI Rewriter")
     st.caption("Get tailored resume bullets, LinkedIn headline & About section optimized for a target job.")
 
-    if not cfg.has_ai:
+    if not cfg.has_any_ai:
         st.warning("⚠️ AI provider required. Add a Groq or OpenAI key in the sidebar.")
     else:
         coach_col1, coach_col2 = st.columns(2)
