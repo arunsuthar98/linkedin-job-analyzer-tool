@@ -18,7 +18,7 @@ from groq import Groq
 
 Provider = Literal["groq", "openai"]
 
-GROQ_DEFAULT_MODEL = "llama3-8b-8192"
+GROQ_DEFAULT_MODEL = "llama-3.1-8b-instant"
 OPENAI_DEFAULT_MODEL = "gpt-3.5-turbo"
 
 

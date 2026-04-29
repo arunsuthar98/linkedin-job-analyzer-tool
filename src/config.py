@@ -16,7 +16,7 @@ class Config:
         default_factory=lambda: os.getenv("GROQ_API_KEY")
     )
     groq_model: str = field(
-        default_factory=lambda: os.getenv("GROQ_MODEL", "llama3-8b-8192")
+        default_factory=lambda: os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     )
     # OpenAI (optional alternative)
     openai_api_key: Optional[str] = field(
