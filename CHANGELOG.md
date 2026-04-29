@@ -91,3 +91,17 @@ This project uses [Semantic Versioning](https://semver.org/):
 - **Major** — breaking changes
 - **Minor** — new features (backward compatible)
 - **Patch** — bug fixes
+
+---
+
+## [1.4.0] — 🌙 Dark Theme
+
+### Added
+- 🌙 **Sleek dark theme** ("Developer Dark") — neon LinkedIn-blue accents, glassy hero header with glow, animated radial background
+- ✨ Glowing primary buttons, neon gradient dividers, hover-lift feature cards
+- 📊 Plotly charts now use `plotly_dark` template with transparent backgrounds
+- 🎨 Custom dark scrollbar, polished tabs, sidebar gradient, focus-glow inputs
+
+### Changed
+- `.streamlit/config.toml` switched to `base = "dark"` with `#0e1117` background and `#00a0dc` primary
+- `assets/style.css` fully rewritten for dark mode (220+ lines)
