@@ -14,6 +14,7 @@ from src.ai_engine import AIEngine
 from src.config import Config
 from src.job_searcher import JobPosting, JobSearcher
 from src.learning_recommender import LearningRecommender
+from src.resume_parser import parse_resume
 from src.skill_analyzer import frequency_map, normalize_skills
 
 # ---------------------------------------------------------------------------
@@ -134,8 +135,8 @@ if not cfg.has_any_ai:
 # Tabs
 # ---------------------------------------------------------------------------
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["🔍 Job Role Research", "📊 Skills Analysis", "🎯 Skill Gap Analysis", "📚 Learning Path"]
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["🔍 Job Role Research", "📊 Skills Analysis", "🎯 Skill Gap Analysis", "📚 Learning Path", "📄 Resume Analyzer"]
 )
 
 # ============================================================
@@ -597,3 +598,324 @@ with tab4:
             file_name=f"learning_path_{role.replace(' ', '_').lower()}.json",
             mime="application/json",
         )
+
+# ============================================================
+# TAB 5 — Resume Analyzer
+# ============================================================
+
+with tab5:
+    st.header("📄 Resume Analyzer")
+    st.markdown(
+        "Upload your resume to discover matching job roles, "
+        "or compare it against a specific job to see your skill gaps and training plan."
+    )
+
+    if not cfg.has_any_ai:
+        st.warning("⚠️ Add a free Groq API key in the sidebar to use Resume Analyzer.")
+    else:
+        # Privacy notice
+        st.info(
+            "🔒 **Privacy notice:** Your resume text is sent to the AI provider (Groq/OpenAI) "
+            "for analysis. It is **not stored** by this app. "
+            "Consider removing personal contact details before uploading if you prefer."
+        )
+
+        # Resume upload
+        st.subheader("📤 Upload Your Resume")
+        uploaded_file = st.file_uploader(
+            "Upload PDF or DOCX (max 5 MB)",
+            type=["pdf", "docx"],
+            help="Supported formats: PDF, DOCX. Max size: 5 MB.",
+        )
+
+        # Also allow pasting as fallback
+        with st.expander("📝 Or paste resume text manually"):
+            pasted_resume = st.text_area(
+                "Paste your resume text here",
+                height=200,
+                placeholder="Paste the full text of your resume...",
+            )
+
+        resume_text = ""
+
+        if uploaded_file is not None:
+            file_bytes = uploaded_file.read()
+            try:
+                with st.spinner("Parsing resume..."):
+                    result = parse_resume(uploaded_file.name, file_bytes)
+                if result.warning:
+                    st.warning(f"⚠️ {result.warning}")
+                else:
+                    st.success(f"✅ Resume parsed ({result.file_type}, {len(result.text)} characters extracted)")
+                resume_text = result.text
+                with st.expander("👁️ Preview extracted text"):
+                    st.text(resume_text[:1500] + ("..." if len(resume_text) > 1500 else ""))
+            except ValueError as e:
+                st.error(f"❌ {e}")
+        elif pasted_resume.strip():
+            resume_text = pasted_resume.strip()
+            st.success(f"✅ Resume text received ({len(resume_text)} characters)")
+
+        if resume_text:
+            st.divider()
+
+            # ── Mode selector ──────────────────────────────────────
+            mode = st.radio(
+                "What would you like to do?",
+                options=[
+                    "🔍 Find jobs I can apply for (resume → job matches)",
+                    "🎯 Compare resume to a specific job (gap analysis + training)",
+                ],
+                horizontal=True,
+            )
+
+            # ============================================================
+            # MODE 1: Resume → Job Matches
+            # ============================================================
+            if mode.startswith("🔍"):
+                st.subheader("🔍 Jobs You Can Apply For")
+
+                if st.button("🤖 Analyse My Resume", type="primary"):
+                    ai = AIEngine(
+                        api_key=cfg.active_ai_key,
+                        provider=cfg.active_ai_provider,
+                        model=cfg.active_model,
+                    )
+                    with st.spinner("Analysing your resume... (10–20 seconds)"):
+                        try:
+                            analysis = ai.analyze_resume(resume_text)
+                            st.session_state["resume_analysis"] = analysis
+                        except Exception as e:
+                            st.error(f"Analysis failed: {e}")
+
+                analysis = st.session_state.get("resume_analysis")
+                if analysis:
+                    # Profile summary
+                    st.subheader("👤 Your Profile")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Career Level", analysis.get("career_level", "—"))
+                    with col2:
+                        st.metric("Experience", f"{analysis.get('experience_years', '?')} years")
+                    with col3:
+                        st.metric("Education", analysis.get("education", "—"))
+
+                    summary = analysis.get("summary", "")
+                    if summary:
+                        st.info(f"💼 **{summary}**")
+
+                    # Skills
+                    skills = analysis.get("skills", [])
+                    if skills:
+                        st.markdown("**🛠️ Skills found in your resume:**")
+                        st.markdown(" • ".join(f"`{s}`" for s in skills))
+
+                    # Job matches
+                    matches = analysis.get("top_job_matches", [])
+                    if matches:
+                        st.subheader("✅ Jobs You Can Apply For")
+                        st.markdown("Based on your resume, here are your best-fit roles:")
+
+                        for match in matches:
+                            role = match.get("role", "")
+                            pct = match.get("match_pct", 0)
+                            color = "🟢" if pct >= 70 else "🟡" if pct >= 40 else "🔴"
+
+                            with st.expander(f"{color} {role} — {pct}% match"):
+                                col_a, col_b = st.columns(2)
+                                with col_a:
+                                    strengths = match.get("strengths", [])
+                                    if strengths:
+                                        st.markdown("**✅ Your strengths for this role:**")
+                                        for s in strengths:
+                                            st.markdown(f"- ✅ {s}")
+                                with col_b:
+                                    gaps = match.get("gaps", [])
+                                    if gaps:
+                                        st.markdown("**📚 What you'd need to learn:**")
+                                        for g in gaps:
+                                            st.markdown(f"- 📚 {g}")
+
+                                # Quick search button
+                                encoded = role.replace(" ", "+")
+                                st.markdown(
+                                    f"[🔍 Search '{role}' jobs on LinkedIn](https://www.linkedin.com/jobs/search/?keywords={encoded})  |  "
+                                    f"[Search on Indeed](https://indeed.com/jobs?q={encoded})"
+                                )
+
+            # ============================================================
+            # MODE 2: Resume vs Job → Gap Analysis
+            # ============================================================
+            else:
+                st.subheader("🎯 Compare Resume to a Job")
+
+                # Job input options
+                job_input_method = st.radio(
+                    "How would you like to provide the job?",
+                    options=[
+                        "📋 Paste job description",
+                        "📌 Pick from my search results",
+                    ],
+                    horizontal=True,
+                )
+
+                job_description = ""
+                job_title = ""
+
+                if job_input_method.startswith("📋"):
+                    job_title = st.text_input(
+                        "Job title (optional)",
+                        placeholder="e.g. Senior Data Scientist at Google",
+                    )
+                    job_description = st.text_area(
+                        "Paste the full job description here",
+                        height=200,
+                        placeholder="Copy and paste the job description from any job board...",
+                    )
+
+                else:
+                    if not st.session_state.search_done or not st.session_state.postings:
+                        st.info("👆 Run a job search in the **Job Role Research** tab first, then come back here.")
+                    else:
+                        postings = st.session_state.postings
+                        options = {f"{p.title} — {p.company}": i for i, p in enumerate(postings)}
+                        selected_label = st.selectbox("Select a job from your search results", list(options.keys()))
+                        selected_job = postings[options[selected_label]]
+                        job_title = f"{selected_job.title} at {selected_job.company}"
+                        job_description = selected_job.description
+                        st.markdown(f"**Selected:** {job_title}")
+
+                if job_description.strip():
+                    if st.button("🤖 Compare Resume to This Job", type="primary"):
+                        ai = AIEngine(
+                            api_key=cfg.active_ai_key,
+                            provider=cfg.active_ai_provider,
+                            model=cfg.active_model,
+                        )
+                        with st.spinner("Comparing your resume to the job... (10–20 seconds)"):
+                            try:
+                                gap = ai.match_resume_to_job(
+                                    resume_text=resume_text,
+                                    job_description=job_description,
+                                    job_title=job_title,
+                                )
+                                st.session_state["resume_gap"] = gap
+                                st.session_state["resume_gap_role"] = job_title
+                            except Exception as e:
+                                st.error(f"Analysis failed: {e}")
+
+                gap = st.session_state.get("resume_gap")
+                if gap:
+                    score = gap.get("readiness_score", 0)
+                    color = "🟢" if score >= 70 else "🟡" if score >= 40 else "🔴"
+
+                    st.divider()
+                    st.subheader(f"{color} Resume Match Score: {score}/100")
+                    st.progress(score / 100)
+
+                    headline = gap.get("suggested_headline", "")
+                    if headline:
+                        st.success(f"✏️ **Suggested resume headline for this role:**  \n_{headline}_")
+
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        matched = gap.get("matched_skills", [])
+                        st.markdown(f"**✅ Matched Skills ({len(matched)})**")
+                        for s in matched:
+                            st.markdown(f"- ✅ {s}")
+                    with col2:
+                        critical = gap.get("missing_critical", [])
+                        st.markdown(f"**🚨 Critical Gaps ({len(critical)})**")
+                        for s in critical:
+                            st.markdown(f"- 🚨 {s}")
+                    with col3:
+                        nice = gap.get("missing_nice_to_have", [])
+                        st.markdown(f"**💡 Nice-to-Have ({len(nice)})**")
+                        for s in nice:
+                            st.markdown(f"- 💡 {s}")
+
+                    strengths = gap.get("resume_strengths", [])
+                    if strengths:
+                        st.subheader("🌟 Your Resume Strengths for This Role")
+                        for s in strengths:
+                            st.markdown(f"- ⭐ {s}")
+
+                    summary = gap.get("summary", "")
+                    if summary:
+                        st.info(f"💬 **AI Coach:** {summary}")
+
+                    # Generate learning path for gaps
+                    all_missing = gap.get("missing_critical", []) + gap.get("missing_nice_to_have", [])
+                    if all_missing:
+                        st.divider()
+                        st.subheader("📚 Get the Missing Skills")
+
+                        role_for_path = st.session_state.get("resume_gap_role", "target role")
+
+                        if st.button("🗺️ Generate Training Plan for My Gaps", type="primary"):
+                            ai = AIEngine(
+                                api_key=cfg.active_ai_key,
+                                provider=cfg.active_ai_provider,
+                                model=cfg.active_model,
+                            )
+                            with st.spinner("Generating your personalised training plan..."):
+                                try:
+                                    path = ai.generate_learning_path(
+                                        job_role=role_for_path,
+                                        missing_skills=all_missing,
+                                    )
+                                    st.session_state["resume_learning_path"] = {
+                                        "path": path,
+                                        "skills": all_missing,
+                                        "role": role_for_path,
+                                    }
+                                except Exception as e:
+                                    st.error(f"Could not generate training plan: {e}")
+
+                        lp = st.session_state.get("resume_learning_path")
+                        if lp:
+                            path = lp["path"]
+                            total = path.get("total_duration_weeks", "?")
+                            st.success(f"🗺️ Training plan: **{total} weeks** to close your skill gaps")
+
+                            for phase in path.get("phases", []):
+                                with st.expander(
+                                    f"Phase {phase.get('phase','')}: {phase.get('title','')} ({phase.get('duration_weeks','?')} weeks)",
+                                    expanded=phase.get("phase", 1) == 1,
+                                ):
+                                    st.markdown(phase.get("description", ""))
+                                    if phase.get("skills"):
+                                        st.markdown("**Skills:** " + ", ".join(phase["skills"]))
+
+                            # Resources
+                            st.subheader("🎥 Learning Resources")
+                            recommender = LearningRecommender(youtube_api_key=cfg.youtube_api_key)
+                            with st.spinner("Fetching resources..."):
+                                resources_list = recommender.get_resources_for_skills(
+                                    skills=all_missing[:8],
+                                    job_role=role_for_path,
+                                    search_queries=path.get("search_queries"),
+                                    max_videos_per_skill=2,
+                                )
+                            for resources in resources_list:
+                                with st.expander(f"📖 {resources.skill}"):
+                                    col_v, col_c = st.columns(2)
+                                    with col_v:
+                                        st.markdown("**📺 YouTube**")
+                                        for v in resources.videos:
+                                            if v.thumbnail:
+                                                st.image(v.thumbnail, width=160)
+                                            st.markdown(f"[{v.title}]({v.url})")
+                                    with col_c:
+                                        st.markdown("**🎓 Courses**")
+                                        for course in resources.courses:
+                                            st.markdown(f"{course.icon} [{course.title}]({course.url})")
+
+                            # Export
+                            import json as _json
+                            st.download_button(
+                                "⬇️ Download Training Plan (JSON)",
+                                data=_json.dumps(lp, indent=2),
+                                file_name="training_plan.json",
+                                mime="application/json",
+                            )
