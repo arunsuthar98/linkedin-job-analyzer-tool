@@ -1,4 +1,7 @@
-"""AI engine — thin wrapper around the OpenAI Chat Completions API.
+"""AI engine — supports Groq (free) and OpenAI.
+
+Groq is the default provider — it's free, fast, and requires no credit card.
+OpenAI is supported as an alternative for users who prefer it.
 
 All job descriptions are treated as untrusted input and passed inside
 clearly delimited blocks.  All analysis requests require JSON-structured
@@ -8,30 +11,54 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import openai
+from groq import Groq
+
+Provider = Literal["groq", "openai"]
+
+GROQ_DEFAULT_MODEL = "llama3-8b-8192"
+OPENAI_DEFAULT_MODEL = "gpt-3.5-turbo"
 
 
 class AIEngine:
-    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo") -> None:
-        self.client = openai.OpenAI(api_key=api_key)
-        self.model = model
+    def __init__(
+        self,
+        api_key: str,
+        provider: Provider = "groq",
+        model: Optional[str] = None,
+    ) -> None:
+        self.provider = provider
+        if provider == "groq":
+            self.groq_client = Groq(api_key=api_key)
+            self.model = model or GROQ_DEFAULT_MODEL
+        else:
+            self.openai_client = openai.OpenAI(api_key=api_key)
+            self.model = model or OPENAI_DEFAULT_MODEL
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
     def _chat(self, system: str, user: str, temperature: float = 0.2) -> str:
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            temperature=temperature,
-            response_format={"type": "json_object"},
-        )
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+        if self.provider == "groq":
+            response = self.groq_client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=temperature,
+            )
+        else:
+            response = self.openai_client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=temperature,
+                response_format={"type": "json_object"},
+            )
         return response.choices[0].message.content or "{}"
 
     def _parse_json(self, raw: str) -> Any:

@@ -54,36 +54,50 @@ for k, v in DEFAULTS.items():
 with st.sidebar:
     st.title("⚙️ Configuration")
     st.markdown(
-        "Provide your API keys below **or** add them to a `.env` file "
-        "(see [README](https://github.com) for details).  \n"
+        "Provide your API keys below **or** add them to a `.env` file.  \n"
         "Keys entered here are stored only in your browser session."
     )
 
     cfg = Config()  # loads from .env if present
 
+    st.markdown("### 🤖 AI Provider")
+    st.markdown("**Groq is FREE** — no credit card needed!")
+
+    groq_key_input = st.text_input(
+        "Groq API Key (FREE ✅)",
+        value=cfg.groq_api_key or "",
+        type="password",
+        placeholder="gsk_...",
+        help="Free at console.groq.com — powers all AI features using Llama 3",
+    )
     openai_key_input = st.text_input(
-        "OpenAI API Key",
+        "OpenAI API Key (optional alternative)",
         value=cfg.openai_api_key or "",
         type="password",
         placeholder="sk-...",
-        help="Required for AI analysis features.",
+        help="Optional. Used only if no Groq key is provided.",
     )
+
+    st.markdown("### 📋 Job Data")
     jsearch_key_input = st.text_input(
         "JSearch API Key (RapidAPI)",
         value=cfg.jsearch_api_key or "",
         type="password",
         placeholder="Your RapidAPI key",
-        help="Required to fetch live job postings. Free tier available at rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch",
+        help="Free tier at rapidapi.com. Without this, demo data is used.",
     )
+
+    st.markdown("### 📺 YouTube (optional)")
     youtube_key_input = st.text_input(
         "YouTube Data API Key",
         value=cfg.youtube_api_key or "",
         type="password",
         placeholder="AIza...",
-        help="Optional — enables embedded video previews. Free tier at console.cloud.google.com",
+        help="Optional — shows video thumbnails. Without it, search links are shown.",
     )
 
     cfg.update_from_ui(
+        groq_key=groq_key_input or None,
         openai_key=openai_key_input or None,
         jsearch_key=jsearch_key_input or None,
         youtube_key=youtube_key_input or None,
@@ -91,16 +105,22 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**Status**")
-    st.markdown(f"{'✅' if cfg.has_openai else '⚠️'} OpenAI — {'connected' if cfg.has_openai else 'not set (required)'}")
-    st.markdown(f"{'✅' if cfg.has_jsearch else '🔶'} JSearch — {'connected' if cfg.has_jsearch else 'demo mode (mock data)'}")
-    st.markdown(f"{'✅' if cfg.has_youtube else '🔶'} YouTube — {'connected' if cfg.has_youtube else 'URL fallback mode'}")
+    if cfg.has_groq:
+        st.markdown("✅ Groq — connected (FREE)")
+    elif cfg.has_openai:
+        st.markdown("✅ OpenAI — connected")
+    else:
+        st.markdown("⚠️ No AI key — add Groq key (free!)")
+    st.markdown(f"{'✅' if cfg.has_jsearch else '🔶'} JSearch — {'connected' if cfg.has_jsearch else 'demo mode'}")
+    st.markdown(f"{'✅' if cfg.has_youtube else '🔶'} YouTube — {'connected' if cfg.has_youtube else 'URL fallback'}")
 
     st.divider()
     st.caption(
-        "💡 **Get API keys:**\n"
-        "- [OpenAI](https://platform.openai.com/api-keys)\n"
-        "- [RapidAPI / JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch)\n"
-        "- [YouTube Data API](https://console.cloud.google.com/apis/library/youtube.googleapis.com)"
+        "💡 **Get FREE API keys:**\n"
+        "- [Groq (FREE)](https://console.groq.com) ← Start here!\n"
+        "- [RapidAPI / JSearch (Free tier)](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch)\n"
+        "- [YouTube Data API (Free)](https://console.cloud.google.com/apis/library/youtube.googleapis.com)\n"
+        "- [OpenAI (optional)](https://platform.openai.com/api-keys)"
     )
 
 # ---------------------------------------------------------------------------
@@ -113,10 +133,10 @@ st.markdown(
     "and get a personalised learning roadmap — all powered by AI."
 )
 
-if not cfg.has_openai:
+if not cfg.has_any_ai:
     st.warning(
-        "⚠️ **OpenAI API key required** for AI analysis.  \n"
-        "Add it in the sidebar or in your `.env` file.  \n"
+        "⚠️ **Add a free Groq API key** to unlock all AI features.  \n"
+        "Get one free at [console.groq.com](https://console.groq.com) — no credit card needed!  \n"
         "Job search and skill frequency charts work without it."
     )
 
@@ -246,12 +266,12 @@ with tab2:
         postings = st.session_state.postings
         job_role = st.session_state.job_role
 
-        if st.button("🤖 Analyse Skills with AI", type="primary", disabled=not cfg.has_openai):
-            if not cfg.has_openai:
-                st.warning("OpenAI API key required.")
+        if st.button("🤖 Analyse Skills with AI", type="primary", disabled=not cfg.has_any_ai):
+            if not cfg.has_any_ai:
+                st.warning("Add a free Groq API key in the sidebar.")
             else:
                 descriptions = [p.description for p in postings if p.description]
-                ai = AIEngine(api_key=cfg.openai_api_key, model=cfg.openai_model)
+                ai = AIEngine(api_key=cfg.active_ai_key, provider=cfg.active_ai_provider, model=cfg.active_model)
 
                 with st.spinner("Analysing skills across all job postings…"):
                     try:
@@ -267,8 +287,8 @@ with tab2:
                     except Exception as e:
                         st.warning(f"Role overview unavailable: {e}")
 
-        if not cfg.has_openai:
-            st.warning("Add your OpenAI API key to enable AI analysis.")
+        if not cfg.has_any_ai:
+            st.warning("Add your free Groq API key to enable AI analysis.")
 
         analysis = st.session_state.skills_analysis
         overview = st.session_state.role_overview
@@ -369,17 +389,17 @@ with tab3:
         analyse_btn = st.button(
             "🤖 Analyse My Skill Gap",
             type="primary",
-            disabled=not cfg.has_openai,
+            disabled=not cfg.has_any_ai,
         )
 
-        if not cfg.has_openai:
-            st.warning("Add your OpenAI API key to enable skill gap analysis.")
+        if not cfg.has_any_ai:
+            st.warning("Add your free Groq API key to enable skill gap analysis.")
 
         if analyse_btn:
             if not skills_text.strip():
                 st.warning("Please enter your skills first.")
-            elif not cfg.has_openai:
-                st.warning("OpenAI API key required.")
+            elif not cfg.has_any_ai:
+                st.warning("Add a free Groq API key in the sidebar.")
             else:
                 # Parse skills from textarea
                 raw_skills = [
@@ -391,7 +411,7 @@ with tab3:
                 user_skills = normalize_skills(raw_skills)
                 st.session_state.user_skills = user_skills
 
-                ai = AIEngine(api_key=cfg.openai_api_key, model=cfg.openai_model)
+                ai = AIEngine(api_key=cfg.active_ai_key, provider=cfg.active_ai_provider, model=cfg.active_model)
                 with st.spinner("Analysing your skill gap…"):
                     try:
                         gap = ai.perform_skill_gap_analysis(
@@ -478,10 +498,10 @@ with tab4:
     generate_btn = st.button(
         "🗺️ Generate Learning Path",
         type="primary",
-        disabled=not cfg.has_openai,
+        disabled=not cfg.has_any_ai,
     )
-    if not cfg.has_openai:
-        st.warning("Add your OpenAI API key to generate a learning path.")
+    if not cfg.has_any_ai:
+        st.warning("Add your free Groq API key to generate a learning path.")
 
     if generate_btn:
         skills_to_learn = [
@@ -494,10 +514,10 @@ with tab4:
 
         if not skills_to_learn:
             st.warning("Please enter at least one skill to learn.")
-        elif not cfg.has_openai:
-            st.warning("OpenAI API key required.")
+        elif not cfg.has_any_ai:
+            st.warning("Add a free Groq API key in the sidebar.")
         else:
-            ai = AIEngine(api_key=cfg.openai_api_key, model=cfg.openai_model)
+            ai = AIEngine(api_key=cfg.active_ai_key, provider=cfg.active_ai_provider, model=cfg.active_model)
             with st.spinner("Generating your personalised learning path…"):
                 try:
                     path = ai.generate_learning_path(
