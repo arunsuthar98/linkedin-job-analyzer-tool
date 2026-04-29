@@ -2,7 +2,7 @@
 
 # 💼 LinkedIn Job & Skills Analyzer
 
-### Your AI-powered career copilot — discover jobs, close skill gaps, build your learning roadmap.
+### Your AI-powered career — discover jobs, close skill gaps, build your learning roadmap.
 
 [![CI](https://github.com/arunsuthar98/linkedin-job-analyzer-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/arunsuthar98/linkedin-job-analyzer-tool/actions)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
