@@ -148,6 +148,7 @@ Star ⭐ the repo if you find it useful!
 
 **Arun Suthar**
 - 🌐 GitHub: [@arunsuthar98](https://github.com/arunsuthar98)
+- 🤖 Hackster: https://www.hackster.io/arunsuthar98/projects
 - 📧 Email: arunsuthar98@gmail.com
 - 💼 Built with ❤️ for everyone navigating their tech career journey
 
